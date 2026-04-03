@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+//   id        Int      @id @default(autoincrement())
+//   email     String   @unique
+//   name      String?
+//   role      Role     @default(CITIZEN)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String     @default("CITIZEN") // Module 10: RBAC [cite: 51]
+  
+  // Relations
+  filedComplaints Complaint[] @relation("CitizenComplaints")
+  department      Department? @relation(fields: [deptId], references: [id])
+  deptId          Int?        // Link for Officers to their specific Dept [cite: 34]
+}
+
+model Complaint {
+//   id           Int      @id @default(autoincrement())
+//   title        String
+//   description  String
+//   status       ComplaintStatus @default(PENDING)
+//   zone         String
+//   createdBy    Int
+//   assignedTo   Int?
+//   createdAt    DateTime @default(now())
+//   updatedAt    DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  type          String   // Pothole, Crack, etc. [cite: 21]
+  description   String
+  severity      String   // Low, Medium, High, Critical 
+  latitude      Float    // Geolocation Tagging [cite: 25]
+  longitude     Float
+  status        String   @default("PENDING") // Audit Trail 
+  createdAt     DateTime @default(now())
+  slaDeadline   DateTime // Calculated based on severity [cite: 36]
+  
+  // Relations
+  citizen       User     @relation("CitizenComplaints", fields: [citizenId], references: [id])
+  citizenId     Int
+  department    Department? @relation(fields: [deptId], references: [id])
+  deptId        Int?
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   // e.g., "North Zone Public Works"
+  zone        String   @unique // Matches the zone detected by lat/lng [cite: 26, 35]
+  contactEmail String
+  
+  // Relations
+  officers    User[]   // List of officers in this department
+  complaints  Complaint[] // Complaints routed here [cite: 34]
+}
